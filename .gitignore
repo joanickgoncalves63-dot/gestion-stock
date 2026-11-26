@@ -1,6 +1,7 @@
 node_modules/
 dist/
 *.keystore
+!android/app/debug.keystore
 *.jks
 android/keystore.properties
 .DS_Store

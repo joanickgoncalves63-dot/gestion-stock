@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -49,6 +49,18 @@ jobs:
         with:
           name: gestion-stock-test-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      # Publie l'APK de test en « release » : lien de téléchargement direct, sans zip ni connexion GitHub.
+      - name: Publier l'APK de test (téléchargement direct)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk gestion-stock.apk
+          gh release create "test-${{ github.run_number }}" gestion-stock.apk \
+            --title "Version de test ${{ env.VERSION_NAME }}" \
+            --notes "APK de test à installer directement sur un téléphone Android." \
+            --target "${{ github.sha }}" --latest
 
       - name: Préparer la clé de signature
         id: keystore

@@ -27,7 +27,7 @@ Ces valeurs ne sont pas secrètes : c'est la liste d'adresses des règles Firest
 
 ### 2. Récupérer l'application de test
 
-À chaque modification, GitHub compile l'application (onglet **Actions** du dépôt). Ouvrez la dernière exécution réussie, téléchargez `gestion-stock-test-apk`, décompressez-le et installez `app-debug.apk` sur le téléphone. Android demandera d'autoriser l'installation depuis cette source.
+Sur le téléphone, ouvrez ce lien : <https://github.com/joanickgoncalves63-dot/gestion-stock/releases/latest/download/gestion-stock.apk>. Il télécharge toujours la dernière version. Touchez le fichier téléchargé pour l'installer ; Android demandera d'autoriser l'installation depuis cette source. Chaque nouvelle version s'installe par-dessus la précédente, sans perdre la connexion.
 
 ### 3. Publier sur le Play Store
 
