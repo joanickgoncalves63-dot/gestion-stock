@@ -88,6 +88,7 @@ function renderLogin() {
       err.textContent = /invalid-credential|wrong-password|user-not-found|invalid-email/.test(c) ? 'E-mail ou mot de passe incorrect.'
         : /network/.test(c) ? 'Pas de connexion internet. La première connexion demande du réseau.'
         : /too-many-requests/.test(c) ? 'Trop d’essais. Attendez quelques minutes puis réessayez.'
+        : /configuration-not-found|operation-not-allowed/.test(c) ? 'La connexion par e-mail n’est pas encore activée dans Firebase (Authentication > Adresse e-mail/Mot de passe).'
         : 'Connexion impossible. Réessayez.';
     }
   });
