@@ -46,6 +46,7 @@ async function boot() {
   store.onAuth((u) => {
     S.user = u;
     if (unsub) { unsub(); unsub = null; }
+    S.loadError = null;
     if (!u) { S.ready = false; S.articles = new Map(); S.moves = []; renderLogin(); return; }
     renderShell();
     unsub = store.subscribe(({ articles, moves }) => {
@@ -59,6 +60,13 @@ async function boot() {
 
 function onStoreError(e) {
   const code = e && e.code;
+  if (!S.ready && S.user) {
+    // Erreur pendant le chargement : on l'affiche à la place de « Chargement du stock… ».
+    S.loadError = code === 'permission-denied' ? 'denied' : 'other';
+    render();
+    console.error(e);
+    return;
+  }
   if (code === 'permission-denied') toast('Accès refusé : ce compte n’est pas autorisé. Voyez avec la personne qui gère l’application.');
   else toast('Erreur de synchronisation. Les données seront renvoyées dès que possible.');
   console.error(e);
@@ -139,6 +147,19 @@ function render() {
   document.querySelectorAll('[data-view]').forEach((b) => { if (b.dataset.view === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   const n = alerts().length;
   document.querySelectorAll('[data-alertcount]').forEach((e) => { e.hidden = !n; e.textContent = n; });
+  if (!S.ready && S.loadError === 'denied') {
+    el.innerHTML = `<h1>Accès refusé</h1><div class="panel"><div class="empty">
+      <p style="margin:0">Vous êtes connecté avec <b>${esc(S.user?.email || '')}</b>, mais cette adresse n’est pas dans la liste des personnes autorisées.</p>
+      <p class="hint" style="margin:0">Dans la console Firebase, Firestore Database &gt; Règles : ajoutez exactement cette adresse, en minuscules, puis « Publier ». Rouvrez ensuite l’application.</p>
+      <button class="btn" data-logout>Changer de compte</button></div></div>`;
+    return;
+  }
+  if (!S.ready && S.loadError === 'other') {
+    el.innerHTML = `<h1>Gestion de stock</h1><div class="panel"><div class="empty">
+      <p style="margin:0">Le stock ne peut pas être chargé pour l’instant. Vérifiez la connexion internet.</p>
+      <button class="btn" onclick="location.reload()">Réessayer</button></div></div>`;
+    return;
+  }
   if (!S.ready) { el.innerHTML = '<h1>Gestion de stock</h1><div class="panel"><div class="empty">Chargement du stock…</div></div>'; return; }
   const keepFocus = document.activeElement && document.activeElement.id === 'q';
   const caret = keepFocus ? document.activeElement.selectionStart : 0;
