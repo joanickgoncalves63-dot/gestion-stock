@@ -1,0 +1,81 @@
+# Compile l'application Android à chaque modification.
+# - APK de test (à installer directement sur un téléphone) : toujours.
+# - AAB signé pour le Play Store : seulement si les secrets de signature sont configurés (voir README).
+name: Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Construire l'application web et la copier dans le projet Android
+        run: npx vite build && npx cap sync android
+
+      - name: Compiler l'APK de test
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gestion-stock-test-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Préparer la clé de signature
+        id: keystore
+        if: github.event_name != 'pull_request'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "Pas de clé de signature configurée : AAB Play Store non produit."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compiler l'AAB signé pour le Play Store
+        if: steps.keystore.outputs.present == 'true'
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: steps.keystore.outputs.present == 'true'
+        with:
+          name: gestion-stock-play-store-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab

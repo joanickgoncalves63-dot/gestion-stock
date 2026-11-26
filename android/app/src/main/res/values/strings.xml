@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Gestion de stock</string>
+    <string name="title_activity_main">Gestion de stock</string>
+    <string name="package_name">fr.pme.gestionstock</string>
+    <string name="custom_url_scheme">fr.pme.gestionstock</string>
+</resources>
