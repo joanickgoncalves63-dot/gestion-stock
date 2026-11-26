@@ -1,0 +1,6 @@
+{
+  "appId": "fr.pme.gestionstock",
+  "appName": "Gestion de stock",
+  "webDir": "dist",
+  "android": { "allowMixedContent": false }
+}

@@ -1,0 +1,26 @@
+rules_version = '2';
+// Règles de sécurité de la base Firestore.
+// Seules les adresses e-mail listées ci-dessous peuvent lire et modifier le stock.
+// Pour ajouter ou retirer une personne : modifiez la liste, puis collez ce fichier dans
+// console Firebase > Firestore Database > Règles > Publier.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function membre() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() in [
+          'personne1@exemple.fr',
+          'personne2@exemple.fr',
+          'personne3@exemple.fr'
+        ];
+    }
+    match /articles/{id} {
+      allow read, write: if membre();
+    }
+    match /mouvements/{id} {
+      allow read, create: if membre();
+      // Le journal ne se modifie pas : il sert de trace.
+      allow update, delete: if false;
+    }
+  }
+}
